@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://sunheight.vercel.app/api/load/GjyLSFylt2IKKjtjhh1JRfMaLCgSrkFP"))()
+loadstring(game:HttpGet("https://sunheight.vercel.app/api/load/yvbeMNbVN8xg6iJu1y1qq80g5f1ECknb"))()
