@@ -2598,36 +2598,18 @@ function RayfieldLibrary:CreateWindow(Settings)
 				Paragraph.BackgroundColor3 = accentColor
 				Paragraph.UIStroke.Color = accentColor
 				Paragraph.UIStroke.Thickness = 1.5
+				-- Update text color for readability on dark backgrounds
+				Paragraph.Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+				Paragraph.Content.TextColor3 = Color3.fromRGB(255, 255, 255)
 			else
 				Paragraph.BackgroundColor3 = SelectedTheme.SecondaryElementBackground
 				Paragraph.UIStroke.Color = SelectedTheme.SecondaryElementStroke
 			end
 
-			TweenService:Create(Paragraph, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = accentColor and 0.75 or 0}):Play()
+			TweenService:Create(Paragraph, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = accentColor and 0 or 0}):Play()
 			TweenService:Create(Paragraph.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
 			TweenService:Create(Paragraph.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
 			TweenService:Create(Paragraph.Content, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-
-			-- Glow pulse animation
-			if ParagraphSettings.Glow then
-				task.spawn(function()
-					while Paragraph and Paragraph.Parent do
-						TweenService:Create(Paragraph, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.5}):Play()
-						task.wait(1)
-						TweenService:Create(Paragraph, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.85}):Play()
-						task.wait(1)
-					end
-				end)
-				-- Glow stroke pulse
-				task.spawn(function()
-					while Paragraph and Paragraph.Parent do
-						TweenService:Create(Paragraph.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0}):Play()
-						task.wait(1)
-						TweenService:Create(Paragraph.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.5}):Play()
-						task.wait(1)
-					end
-				end)
-			end
 
 			function ParagraphValue:Set(NewParagraphSettings)
 				Paragraph.Title.Text = NewParagraphSettings.Title
