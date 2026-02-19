@@ -1651,7 +1651,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 	local Passthrough = false
 	Topbar.Title.Text = Settings.Name
 
-	Main.Size = UDim2.new(0, 420, 0, 100)
+	Main.Size = UDim2.new(0, 0, 0, 0) -- Start at zero for expansion
 	Main.Visible = true
 	Main.BackgroundTransparency = 1
 	if Main:FindFirstChild('Notice') then Main.Notice.Visible = false end
@@ -1659,6 +1659,33 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 	LoadingFrame.Title.TextTransparency = 1
 	LoadingFrame.Subtitle.TextTransparency = 1
+	
+	-- Status Label for Loading
+	local LoadingStatus = Instance.new("TextLabel")
+	LoadingStatus.Name = "Status"
+	LoadingStatus.BackgroundTransparency = 1
+	LoadingStatus.Position = UDim2.new(0.5, 0, 1, -25)
+	LoadingStatus.Size = UDim2.new(1, 0, 0, 20)
+	LoadingStatus.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	LoadingStatus.AnchorPoint = Vector2.new(0.5, 1)
+	LoadingStatus.Font = Enum.Font.Gotham
+	LoadingStatus.Text = "Initialisation des modules..."
+	LoadingStatus.TextColor3 = SelectedTheme.TextColor or Color3.fromRGB(240, 240, 240)
+	LoadingStatus.TextSize = 12
+	LoadingStatus.TextTransparency = 1
+	LoadingStatus.Parent = LoadingFrame
+
+	-- Initial Glow Bloom Effect
+	local Bloom = Instance.new("ImageLabel")
+	Bloom.Name = "Bloom"
+	Bloom.BackgroundTransparency = 1
+	Bloom.Position = UDim2.new(0.5, 0, 0.5, 0)
+	Bloom.Size = UDim2.new(0, 0, 0, 0)
+	Bloom.AnchorPoint = Vector2.new(0.5, 0.5)
+	Bloom.Image = "rbxassetid://6015667362"
+	Bloom.ImageColor3 = SelectedTheme.ToggleEnabled or Color3.fromRGB(145, 90, 255)
+	Bloom.ImageTransparency = 1
+	Bloom.Parent = Main
 
 	if Settings.ShowText then
 		MPrompt.Title.Text = 'Show '..Settings.ShowText
@@ -1990,14 +2017,44 @@ function RayfieldLibrary:CreateWindow(Settings)
 	Rayfield.Enabled = true
 
 	task.wait(0.5)
-	TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
-	TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0.6}):Play()
-	task.wait(0.1)
-	TweenService:Create(LoadingFrame.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-	task.wait(0.05)
-	TweenService:Create(LoadingFrame.Subtitle, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-	task.wait(0.05)
-	TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+	
+	-- Window Expansion with Spring
+	TweenService:Create(Main, TweenInfo.new(1.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 420, 0, 100), BackgroundTransparency = 0.05}):Play()
+	TweenService:Create(Main.Shadow.Image, TweenInfo.new(1, Enum.EasingStyle.Cubic), {ImageTransparency = 0.5}):Play()
+	
+	-- Bloom Pulse
+	TweenService:Create(Main.Bloom, TweenInfo.new(0.8, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1.5, 0, 1.5, 0), ImageTransparency = 0.4}):Play()
+
+	task.wait(0.4)
+	
+	-- Typewriter Title Reveal
+	local function Typewrite(Label, Text)
+		Label.Text = ""
+		Label.TextTransparency = 0
+		for i = 1, #Text do
+			Label.Text = string.sub(Text, 1, i)
+			task.wait(0.02)
+		end
+	end
+
+	task.spawn(function()
+		Typewrite(LoadingFrame.Title, Settings.LoadingTitle or "Rayfield Gen")
+	end)
+	
+	task.wait(0.2)
+	TweenService:Create(LoadingFrame.Subtitle, TweenInfo.new(0.8, Enum.EasingStyle.Cubic), {TextTransparency = 0}):Play()
+	TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.8, Enum.EasingStyle.Cubic), {TextTransparency = 0}):Play()
+	
+	-- Pulsing Status
+	task.spawn(function()
+		TweenService:Create(LoadingFrame.Status, TweenInfo.new(0.5, Enum.EasingStyle.Cubic), {TextTransparency = 0.3}):Play()
+		while LoadingFrame.Visible do
+			TweenService:Create(LoadingFrame.Status, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {TextTransparency = 0.7}):Play()
+			task.wait(1)
+			TweenService:Create(LoadingFrame.Status, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {TextTransparency = 0.2}):Play()
+			task.wait(1)
+		end
+	end)
 
 
 	Elements.Template.LayoutOrder = 100000
@@ -3634,14 +3691,23 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 
 	task.wait(1.1)
+	
+	-- Transition to Main UI
+	TweenService:Create(Main.Bloom, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0), ImageTransparency = 1}):Play()
+	TweenService:Create(LoadingFrame.Status, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {TextTransparency = 1, Position = UDim2.new(0.5, 0, 1, 20)}):Play()
+	
 	TweenService:Create(Main, TweenInfo.new(0.7, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 390, 0, 90)}):Play()
 	task.wait(0.3)
-	TweenService:Create(LoadingFrame.Title, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-	TweenService:Create(LoadingFrame.Subtitle, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-	TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+	TweenService:Create(LoadingFrame.Title, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {TextTransparency = 1, Position = UDim2.new(0.5, 0, 0, -50)}):Play()
+	TweenService:Create(LoadingFrame.Subtitle, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {TextTransparency = 1, Position = UDim2.new(0.5, 0, 0, -20)}):Play()
+	TweenService:Create(LoadingFrame.Version, TweenInfo.new(0.3, Enum.EasingStyle.Cubic), {TextTransparency = 1}):Play()
+	
 	task.wait(0.1)
-	TweenService:Create(Main, TweenInfo.new(0.6, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)}):Play()
-	TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {ImageTransparency = 0.6}):Play()
+	TweenService:Create(Main, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 500, 0, 475)}):Play()
+	TweenService:Create(Main.Shadow.Image, TweenInfo.new(0.6, Enum.EasingStyle.Cubic), {ImageTransparency = 0.6}):Play()
+
+	task.wait(0.4)
+	LoadingFrame.Visible = false -- Stop the pulsing loop and hide the frame
 
 	Topbar.BackgroundTransparency = 1
 	Topbar.Divider.Size = UDim2.new(0, 0, 0, 1)
