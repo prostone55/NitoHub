@@ -2592,13 +2592,42 @@ function RayfieldLibrary:CreateWindow(Settings)
 			Paragraph.Title.TextTransparency = 1
 			Paragraph.Content.TextTransparency = 1
 
-			Paragraph.BackgroundColor3 = SelectedTheme.SecondaryElementBackground
-			Paragraph.UIStroke.Color = SelectedTheme.SecondaryElementStroke
+			-- Color support
+			local accentColor = ParagraphSettings.Color
+			if accentColor then
+				Paragraph.BackgroundColor3 = accentColor
+				Paragraph.UIStroke.Color = accentColor
+				Paragraph.UIStroke.Thickness = 1.5
+			else
+				Paragraph.BackgroundColor3 = SelectedTheme.SecondaryElementBackground
+				Paragraph.UIStroke.Color = SelectedTheme.SecondaryElementStroke
+			end
 
-			TweenService:Create(Paragraph, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
+			TweenService:Create(Paragraph, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = accentColor and 0.75 or 0}):Play()
 			TweenService:Create(Paragraph.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
-			TweenService:Create(Paragraph.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()	
-			TweenService:Create(Paragraph.Content, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()	
+			TweenService:Create(Paragraph.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+			TweenService:Create(Paragraph.Content, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+
+			-- Glow pulse animation
+			if ParagraphSettings.Glow then
+				task.spawn(function()
+					while Paragraph and Paragraph.Parent do
+						TweenService:Create(Paragraph, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.5}):Play()
+						task.wait(1)
+						TweenService:Create(Paragraph, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.85}):Play()
+						task.wait(1)
+					end
+				end)
+				-- Glow stroke pulse
+				task.spawn(function()
+					while Paragraph and Paragraph.Parent do
+						TweenService:Create(Paragraph.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0}):Play()
+						task.wait(1)
+						TweenService:Create(Paragraph.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.5}):Play()
+						task.wait(1)
+					end
+				end)
+			end
 
 			function ParagraphValue:Set(NewParagraphSettings)
 				Paragraph.Title.Text = NewParagraphSettings.Title
@@ -2606,8 +2635,10 @@ function RayfieldLibrary:CreateWindow(Settings)
 			end
 
 			Rayfield.Main:GetPropertyChangedSignal('BackgroundColor3'):Connect(function()
-				Paragraph.BackgroundColor3 = SelectedTheme.SecondaryElementBackground
-				Paragraph.UIStroke.Color = SelectedTheme.SecondaryElementStroke
+				if not accentColor then
+					Paragraph.BackgroundColor3 = SelectedTheme.SecondaryElementBackground
+					Paragraph.UIStroke.Color = SelectedTheme.SecondaryElementStroke
+				end
 			end)
 
 			return ParagraphValue
@@ -2776,7 +2807,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 					Debounce = true
 					TweenService:Create(Dropdown, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, -10, 0, 45)}):Play()
 					for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-						if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "Placeholder" then
+						if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "Placeholder" and DropdownOpt.Name ~= "SearchBar" then
 							TweenService:Create(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
 							TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
 							TweenService:Create(DropdownOpt.Title, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
@@ -2804,7 +2835,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 						end
 					end
 					for _, DropdownOpt in ipairs(Dropdown.List:GetChildren()) do
-						if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "Placeholder" then
+						if DropdownOpt.ClassName == "Frame" and DropdownOpt.Name ~= "Placeholder" and DropdownOpt.Name ~= "SearchBar" then
 							if DropdownOpt.Name ~= Dropdown.Selected.Text then
 								TweenService:Create(DropdownOpt.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
 							end
