@@ -1666,12 +1666,12 @@ function RayfieldLibrary:CreateWindow(Settings)
 	LoadingStatus.BackgroundTransparency = 1
 	LoadingStatus.Position = UDim2.new(0.5, 0, 1, -25)
 	LoadingStatus.Size = UDim2.new(1, 0, 0, 20)
-	LoadingStatus.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	LoadingStatus.AnchorPoint = Vector2.new(0.5, 1)
 	LoadingStatus.Font = Enum.Font.Gotham
 	LoadingStatus.Text = "Initialisation des modules..."
 	LoadingStatus.TextColor3 = SelectedTheme.TextColor or Color3.fromRGB(240, 240, 240)
 	LoadingStatus.TextSize = 12
+	LoadingStatus.TextXAlignment = Enum.TextXAlignment.Center
 	LoadingStatus.TextTransparency = 1
 	LoadingStatus.Parent = LoadingFrame
 
