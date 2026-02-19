@@ -1047,12 +1047,36 @@ function RayfieldLibrary:Notify(data)
 		local newNotification = Notifications.Template:Clone()
 		newNotification.Name = data.Title or 'No Title Provided'
 		newNotification.Parent = Notifications
-		newNotification.LayoutOrder = -#Notifications:GetChildren() -- Newest on top
+		newNotification.LayoutOrder = -#Notifications:GetChildren()
 		newNotification.Visible = false
 
-		newNotification.Title.Text = data.Title or "Notification"
-		newNotification.Description.Text = data.Content or "Contenu de la notification"
+		-- Premium Visuals: Gradient & Initial State
+		local MainFrame = Instance.new("Frame")
+		MainFrame.Name = "MainFrame"
+		MainFrame.Size = UDim2.new(1, 0, 1, 0)
+		MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+		MainFrame.BorderSizePixel = 0
+		MainFrame.BackgroundTransparency = 1
+		MainFrame.Parent = newNotification
+		
+		local Gradient = Instance.new("UIGradient")
+		Gradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, SelectedTheme.ToggleEnabled or Color3.fromRGB(145, 90, 255)),
+			ColorSequenceKeypoint.new(1, SelectedTheme.Background or Color3.fromRGB(25, 25, 25))
+		})
+		Gradient.Rotation = 45
+		Gradient.Transparency = NumberSequence.new(0.4)
+		Gradient.Parent = MainFrame
 
+		local UICorner = Instance.new("UICorner")
+		UICorner.CornerRadius = UDim.new(0, 8)
+		UICorner.Parent = MainFrame
+
+		newNotification.Title.Text = data.Title or "Notification"
+		newNotification.Description.Text = data.Content or "Notification Content"
+		newNotification.BackgroundTransparency = 1
+		
+		-- Setup Icon Correctly
 		if data.Image then
 			if typeof(data.Image) == 'string' and Icons then
 				local asset = getIcon(data.Image)
@@ -1068,22 +1092,34 @@ function RayfieldLibrary:Notify(data)
 
 		newNotification.Title.TextColor3 = SelectedTheme.TextColor
 		newNotification.Description.TextColor3 = SelectedTheme.TextColor
-		newNotification.BackgroundColor3 = SelectedTheme.Background
 		newNotification.UIStroke.Color = SelectedTheme.TextColor
 		newNotification.Icon.ImageColor3 = SelectedTheme.TextColor
+		
+		-- Typography Polish
+		newNotification.Title.Font = Enum.Font.GothamBold
+		newNotification.Description.LineHeight = 1.1
 
-		-- Progress Bar Setup
+		-- Progress Bar Setup (Thicker & Glowing)
 		local ProgressBar = Instance.new("Frame")
 		ProgressBar.Name = "ProgressBar"
 		ProgressBar.BackgroundColor3 = SelectedTheme.ToggleEnabled or Color3.fromRGB(145, 90, 255)
 		ProgressBar.BorderSizePixel = 0
-		ProgressBar.Position = UDim2.new(0, 0, 1, -2)
-		ProgressBar.Size = UDim2.new(1, 0, 0, 2)
-		ProgressBar.BackgroundTransparency = 0.5
-		ProgressBar.Parent = newNotification
+		ProgressBar.Position = UDim2.new(0, 0, 1, -3)
+		ProgressBar.Size = UDim2.new(1, 0, 0, 3)
+		ProgressBar.ZIndex = 3
+		ProgressBar.Parent = MainFrame
 
-		newNotification.Position = UDim2.new(1, 300, 0, 0) -- Start off-screen right
-		newNotification.BackgroundTransparency = 1
+		local ProgressGlow = Instance.new("ImageLabel")
+		ProgressGlow.Name = "Glow"
+		ProgressGlow.BackgroundTransparency = 1
+		ProgressGlow.Position = UDim2.new(0, -15, 0, -15)
+		ProgressGlow.Size = UDim2.new(1, 30, 1, 30)
+		ProgressGlow.Image = "rbxassetid://6015667362"
+		ProgressGlow.ImageColor3 = ProgressBar.BackgroundColor3
+		ProgressGlow.ImageTransparency = 0.6
+		ProgressGlow.Parent = ProgressBar
+
+		newNotification.Position = UDim2.new(1, 400, 0, 0)
 		newNotification.Title.TextTransparency = 1
 		newNotification.Description.TextTransparency = 1
 		newNotification.UIStroke.Transparency = 1
@@ -1092,28 +1128,26 @@ function RayfieldLibrary:Notify(data)
 		newNotification.Visible = true
 
 		local bounds = {newNotification.Title.TextBounds.Y, newNotification.Description.TextBounds.Y}
-		local TargetHeight = math.max(bounds[1] + bounds[2] + 35, 65)
+		local TargetHeight = math.max(bounds[1] + bounds[2] + 40, 70)
 		newNotification.Size = UDim2.new(1, -20, 0, TargetHeight)
 
 		-- Pop-in
-		TweenService:Create(newNotification, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
-		TweenService:Create(newNotification, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0.2}):Play()
-		TweenService:Create(newNotification.Title, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {TextTransparency = 0}):Play()
-		TweenService:Create(newNotification.Description, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {TextTransparency = 0.2}):Play()
-		TweenService:Create(newNotification.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {ImageTransparency = 0}):Play()
-		TweenService:Create(newNotification.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {Transparency = 0.8}):Play()
-		TweenService:Create(newNotification.Shadow, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {ImageTransparency = 0.7}):Play()
+		TweenService:Create(newNotification, TweenInfo.new(0.8, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+		TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Cubic), {BackgroundTransparency = 0.1}):Play()
+		TweenService:Create(newNotification.Title, TweenInfo.new(0.5, Enum.EasingStyle.Cubic), {TextTransparency = 0}):Play()
+		TweenService:Create(newNotification.Description, TweenInfo.new(0.5, Enum.EasingStyle.Cubic), {TextTransparency = 0.2}):Play()
+		TweenService:Create(newNotification.Icon, TweenInfo.new(0.5, Enum.EasingStyle.Cubic), {ImageTransparency = 0}):Play()
+		TweenService:Create(newNotification.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Cubic), {Transparency = 0.8}):Play()
+		TweenService:Create(newNotification.Shadow, TweenInfo.new(0.5, Enum.EasingStyle.Cubic), {ImageTransparency = 0.6}):Play()
 
 		local duration = data.Duration or math.min(math.max((#newNotification.Description.Text * 0.05) + 3, 3), 10)
-		
-		-- Progress animation
-		TweenService:Create(ProgressBar, TweenInfo.new(duration, Enum.Linear), {Size = UDim2.new(0, 0, 0, 2)}):Play()
+		TweenService:Create(ProgressBar, TweenInfo.new(duration, Enum.Linear), {Size = UDim2.new(0, 0, 0, 3)}):Play()
 		
 		task.wait(duration)
 
 		-- Pop-out
-		TweenService:Create(newNotification, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Position = UDim2.new(1, 300, 0, 0)}):Play()
-		TweenService:Create(newNotification, TweenInfo.new(0.5, Enum.EasingStyle.Cubic), {BackgroundTransparency = 1, Size = UDim2.new(1, -20, 0, 0)}):Play()
+		TweenService:Create(newNotification, TweenInfo.new(0.6, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {Position = UDim2.new(1, 400, 0, 0)}):Play()
+		TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {BackgroundTransparency = 1}):Play()
 		
 		task.wait(0.6)
 		newNotification:Destroy()
