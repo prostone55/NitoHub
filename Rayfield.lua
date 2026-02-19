@@ -1042,24 +1042,20 @@ local function SaveConfiguration()
 	callSafely(writefile, ConfigurationFolder .. "/" .. CFileName .. ConfigurationExtension, tostring(HttpService:JSONEncode(Data)))
 end
 
-function RayfieldLibrary:Notify(data) -- action e.g open messages
+function RayfieldLibrary:Notify(data)
 	task.spawn(function()
-
-		-- Notification Object Creation
 		local newNotification = Notifications.Template:Clone()
 		newNotification.Name = data.Title or 'No Title Provided'
 		newNotification.Parent = Notifications
-		newNotification.LayoutOrder = #Notifications:GetChildren()
+		newNotification.LayoutOrder = -#Notifications:GetChildren() -- Newest on top
 		newNotification.Visible = false
 
-		-- Set Data
-		newNotification.Title.Text = data.Title or "Unknown Title"
-		newNotification.Description.Text = data.Content or "Unknown Content"
+		newNotification.Title.Text = data.Title or "Notification"
+		newNotification.Description.Text = data.Content or "Contenu de la notification"
 
 		if data.Image then
 			if typeof(data.Image) == 'string' and Icons then
 				local asset = getIcon(data.Image)
-
 				newNotification.Icon.Image = 'rbxassetid://'..asset.id
 				newNotification.Icon.ImageRectOffset = asset.imageRectOffset
 				newNotification.Icon.ImageRectSize = asset.imageRectSize
@@ -1067,10 +1063,8 @@ function RayfieldLibrary:Notify(data) -- action e.g open messages
 				newNotification.Icon.Image = getAssetUri(data.Image)
 			end
 		else
-			newNotification.Icon.Image = "rbxassetid://" .. 0
+			newNotification.Icon.Image = "rbxassetid://0"
 		end
-
-		-- Set initial transparency values
 
 		newNotification.Title.TextColor3 = SelectedTheme.TextColor
 		newNotification.Description.TextColor3 = SelectedTheme.TextColor
@@ -1078,63 +1072,50 @@ function RayfieldLibrary:Notify(data) -- action e.g open messages
 		newNotification.UIStroke.Color = SelectedTheme.TextColor
 		newNotification.Icon.ImageColor3 = SelectedTheme.TextColor
 
+		-- Progress Bar Setup
+		local ProgressBar = Instance.new("Frame")
+		ProgressBar.Name = "ProgressBar"
+		ProgressBar.BackgroundColor3 = SelectedTheme.ToggleEnabled or Color3.fromRGB(145, 90, 255)
+		ProgressBar.BorderSizePixel = 0
+		ProgressBar.Position = UDim2.new(0, 0, 1, -2)
+		ProgressBar.Size = UDim2.new(1, 0, 0, 2)
+		ProgressBar.BackgroundTransparency = 0.5
+		ProgressBar.Parent = newNotification
+
+		newNotification.Position = UDim2.new(1, 300, 0, 0) -- Start off-screen right
 		newNotification.BackgroundTransparency = 1
 		newNotification.Title.TextTransparency = 1
 		newNotification.Description.TextTransparency = 1
 		newNotification.UIStroke.Transparency = 1
 		newNotification.Shadow.ImageTransparency = 1
-		newNotification.Size = UDim2.new(1, 0, 0, 800)
 		newNotification.Icon.ImageTransparency = 1
-		newNotification.Icon.BackgroundTransparency = 1
-
-		task.wait()
-
 		newNotification.Visible = true
 
-		if data.Actions then
-			warn('Rayfield | Not seeing your actions in notifications?')
-			print("Notification Actions are being sunset for now, keep up to date on when they're back in the discord. (sirius.menu/discord)")
-		end
-
-		-- Calculate textbounds and set initial values
 		local bounds = {newNotification.Title.TextBounds.Y, newNotification.Description.TextBounds.Y}
-		newNotification.Size = UDim2.new(1, -60, 0, -Notifications:FindFirstChild("UIListLayout").Padding.Offset)
+		local TargetHeight = math.max(bounds[1] + bounds[2] + 35, 65)
+		newNotification.Size = UDim2.new(1, -20, 0, TargetHeight)
 
-		newNotification.Icon.Size = UDim2.new(0, 32, 0, 32)
-		newNotification.Icon.Position = UDim2.new(0, 20, 0.5, 0)
+		-- Pop-in
+		TweenService:Create(newNotification, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+		TweenService:Create(newNotification, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0.2}):Play()
+		TweenService:Create(newNotification.Title, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {TextTransparency = 0}):Play()
+		TweenService:Create(newNotification.Description, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {TextTransparency = 0.2}):Play()
+		TweenService:Create(newNotification.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {ImageTransparency = 0}):Play()
+		TweenService:Create(newNotification.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {Transparency = 0.8}):Play()
+		TweenService:Create(newNotification.Shadow, TweenInfo.new(0.4, Enum.EasingStyle.Cubic), {ImageTransparency = 0.7}):Play()
 
-		TweenService:Create(newNotification, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, 0, 0, math.max(bounds[1] + bounds[2] + 31, 60))}):Play()
+		local duration = data.Duration or math.min(math.max((#newNotification.Description.Text * 0.05) + 3, 3), 10)
+		
+		-- Progress animation
+		TweenService:Create(ProgressBar, TweenInfo.new(duration, Enum.Linear), {Size = UDim2.new(0, 0, 0, 2)}):Play()
+		
+		task.wait(duration)
 
-		task.wait(0.15)
-		TweenService:Create(newNotification, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.45}):Play()
-		TweenService:Create(newNotification.Title, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-
-		task.wait(0.05)
-
-		TweenService:Create(newNotification.Icon, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {ImageTransparency = 0}):Play()
-
-		task.wait(0.05)
-		TweenService:Create(newNotification.Description, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 0.35}):Play()
-		TweenService:Create(newNotification.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Transparency = 0.95}):Play()
-		TweenService:Create(newNotification.Shadow, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {ImageTransparency = 0.82}):Play()
-
-		local waitDuration = math.min(math.max((#newNotification.Description.Text * 0.1) + 2.5, 3), 10)
-		task.wait(data.Duration or waitDuration)
-
-		newNotification.Icon.Visible = false
-		TweenService:Create(newNotification, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
-		TweenService:Create(newNotification.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
-		TweenService:Create(newNotification.Shadow, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {ImageTransparency = 1}):Play()
-		TweenService:Create(newNotification.Title, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-		TweenService:Create(newNotification.Description, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-
-		TweenService:Create(newNotification, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, -90, 0, 0)}):Play()
-
-		task.wait(1)
-
-		TweenService:Create(newNotification, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Size = UDim2.new(1, -90, 0, -Notifications:FindFirstChild("UIListLayout").Padding.Offset)}):Play()
-
-		newNotification.Visible = false
+		-- Pop-out
+		TweenService:Create(newNotification, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Position = UDim2.new(1, 300, 0, 0)}):Play()
+		TweenService:Create(newNotification, TweenInfo.new(0.5, Enum.EasingStyle.Cubic), {BackgroundTransparency = 1, Size = UDim2.new(1, -20, 0, 0)}):Play()
+		
+		task.wait(0.6)
 		newNotification:Destroy()
 	end)
 end
@@ -1989,6 +1970,9 @@ function RayfieldLibrary:CreateWindow(Settings)
 	Elements.Template.Visible = false
 
 	Elements.UIPageLayout.FillDirection = Enum.FillDirection.Horizontal
+	Elements.UIPageLayout.EasingStyle = Enum.EasingStyle.Exponential
+	Elements.UIPageLayout.EasingDirection = Enum.EasingDirection.Out
+	Elements.UIPageLayout.TweenTime = 0.4
 	TabList.Template.Visible = false
 
 	-- Tab
@@ -2023,12 +2007,37 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 
 
-		TabButton.BackgroundTransparency = 1
-		TabButton.Title.TextTransparency = 1
-		TabButton.Image.ImageTransparency = 1
-		TabButton.UIStroke.Transparency = 1
-
 		TabButton.Visible = not Ext or false
+
+		-- Tab Indicator and Glow
+		local TabIndicator = Instance.new("Frame")
+		TabIndicator.Name = "Indicator"
+		TabIndicator.BackgroundColor3 = SelectedTheme.ToggleEnabled or Color3.fromRGB(145, 90, 255)
+		TabIndicator.BorderSizePixel = 0
+		TabIndicator.Position = UDim2.new(0.5, 0, 1, 0)
+		TabIndicator.Size = UDim2.new(0, 0, 0, 2)
+		TabIndicator.AnchorPoint = Vector2.new(0.5, 1)
+		TabIndicator.BackgroundTransparency = 1
+		TabIndicator.Parent = TabButton
+		
+		local Glow = Instance.new("Frame")
+		Glow.Name = "Glow"
+		Glow.BackgroundColor3 = SelectedTheme.ToggleEnabled or Color3.fromRGB(145, 90, 255)
+		Glow.BorderSizePixel = 0
+		Glow.Position = UDim2.new(0, 0, 0, 0)
+		Glow.Size = UDim2.new(1, 0, 1, 0)
+		Glow.ZIndex = TabButton.ZIndex - 1
+		Glow.BackgroundTransparency = 1
+		Glow.Parent = TabButton
+
+		local GlowGradient = Instance.new("UIGradient")
+		GlowGradient.Rotation = 90
+		GlowGradient.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.8, 0.8),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		GlowGradient.Parent = Glow
 
 		-- Create Elements Page
 		local TabPage = Elements.Template:Clone()
@@ -2045,6 +2054,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 		TabPage.Parent = Elements
 		if not FirstTab and not Ext then
+			FirstTab = Name
 			Elements.UIPageLayout.Animated = false
 			Elements.UIPageLayout:JumpTo(TabPage)
 			Elements.UIPageLayout.Animated = true
@@ -2056,10 +2066,14 @@ function RayfieldLibrary:CreateWindow(Settings)
 			TabButton.BackgroundColor3 = SelectedTheme.TabBackgroundSelected
 			TabButton.Image.ImageColor3 = SelectedTheme.SelectedTabTextColor
 			TabButton.Title.TextColor3 = SelectedTheme.SelectedTabTextColor
+			TabIndicator.Size = UDim2.new(0.6, 0, 0, 2)
+			TabIndicator.BackgroundTransparency = 0
 		else
 			TabButton.BackgroundColor3 = SelectedTheme.TabBackground
 			TabButton.Image.ImageColor3 = SelectedTheme.TabTextColor
 			TabButton.Title.TextColor3 = SelectedTheme.TabTextColor
+			TabIndicator.Size = UDim2.new(0, 0, 0, 2)
+			TabIndicator.BackgroundTransparency = 1
 		end
 
 
@@ -2086,28 +2100,42 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 		TabButton.Interact.MouseButton1Click:Connect(function()
 			if Minimised then return end
-			TweenService:Create(TabButton, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0}):Play()
-			TweenService:Create(TabButton.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
-			TweenService:Create(TabButton.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-			TweenService:Create(TabButton.Image, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0}):Play()
-			TweenService:Create(TabButton, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundColor3 = SelectedTheme.TabBackgroundSelected}):Play()
-			TweenService:Create(TabButton.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextColor3 = SelectedTheme.SelectedTabTextColor}):Play()
-			TweenService:Create(TabButton.Image, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageColor3 = SelectedTheme.SelectedTabTextColor}):Play()
+			
+			TweenService:Create(TabButton, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0, BackgroundColor3 = SelectedTheme.TabBackgroundSelected}):Play()
+			TweenService:Create(TabButton.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Transparency = 1}):Play()
+			TweenService:Create(TabButton.Title, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {TextTransparency = 0, TextColor3 = SelectedTheme.SelectedTabTextColor}):Play()
+			TweenService:Create(TabButton.Image, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {ImageTransparency = 0, ImageColor3 = SelectedTheme.SelectedTabTextColor}):Play()
+			TweenService:Create(TabIndicator, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0.6, 0, 0, 2), BackgroundTransparency = 0}):Play()
+			TweenService:Create(Glow, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 
 			for _, OtherTabButton in ipairs(TabList:GetChildren()) do
 				if OtherTabButton.Name ~= "Template" and OtherTabButton.ClassName == "Frame" and OtherTabButton ~= TabButton and OtherTabButton.Name ~= "Placeholder" then
-					TweenService:Create(OtherTabButton, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundColor3 = SelectedTheme.TabBackground}):Play()
-					TweenService:Create(OtherTabButton.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextColor3 = SelectedTheme.TabTextColor}):Play()
-					TweenService:Create(OtherTabButton.Image, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageColor3 = SelectedTheme.TabTextColor}):Play()
-					TweenService:Create(OtherTabButton, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.7}):Play()
-					TweenService:Create(OtherTabButton.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0.2}):Play()
-					TweenService:Create(OtherTabButton.Image, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0.2}):Play()
-					TweenService:Create(OtherTabButton.UIStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {Transparency = 0.5}):Play()
+					TweenService:Create(OtherTabButton, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundColor3 = SelectedTheme.TabBackground, BackgroundTransparency = 0.7}):Play()
+					TweenService:Create(OtherTabButton.Title, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {TextColor3 = SelectedTheme.TabTextColor, TextTransparency = 0.2}):Play()
+					TweenService:Create(OtherTabButton.Image, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {ImageColor3 = SelectedTheme.TabTextColor, ImageTransparency = 0.2}):Play()
+					TweenService:Create(OtherTabButton.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Transparency = 0.5}):Play()
+					if OtherTabButton:FindFirstChild("Indicator") then
+						TweenService:Create(OtherTabButton.Indicator, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Size = UDim2.new(0, 0, 0, 2), BackgroundTransparency = 1}):Play()
+					end
 				end
 			end
 
 			if Elements.UIPageLayout.CurrentPage ~= TabPage then
 				Elements.UIPageLayout:JumpTo(TabPage)
+			end
+		end)
+
+		TabButton.Interact.MouseEnter:Connect(function()
+			if Elements.UIPageLayout.CurrentPage ~= TabPage then
+				TweenService:Create(TabButton, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0.6}):Play()
+				TweenService:Create(Glow, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0.9}):Play()
+			end
+		end)
+
+		TabButton.Interact.MouseLeave:Connect(function()
+			if Elements.UIPageLayout.CurrentPage ~= TabPage then
+				TweenService:Create(TabButton, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 0.7}):Play()
+				TweenService:Create(Glow, TweenInfo.new(0.4, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 			end
 		end)
 
@@ -2438,7 +2466,6 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 		-- Section
 		function Tab:CreateSection(SectionName)
-
 			local SectionValue = {}
 
 			if SDone then
@@ -2451,16 +2478,36 @@ function RayfieldLibrary:CreateWindow(Settings)
 			Section.Title.Text = SectionName
 			Section.Visible = true
 			Section.Parent = TabPage
-
+			
+			-- Premium Section Style
 			Section.Title.TextTransparency = 1
-			TweenService:Create(Section.Title, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {TextTransparency = 0.4}):Play()
+			Section.Title.Font = Enum.Font.GothamBold -- Enforce bold for visibility
+			
+			local Indicator = Instance.new("Frame")
+			Indicator.Name = "Indicator"
+			Indicator.BackgroundColor3 = SelectedTheme.ToggleEnabled or Color3.fromRGB(145, 90, 255)
+			Indicator.BorderSizePixel = 0
+			Indicator.Position = UDim2.new(0, 0, 0, 6)
+			Indicator.Size = UDim2.new(0, 2, 0, 0)
+			Indicator.BackgroundTransparency = 1
+			Indicator.Parent = Section
+
+			local IndicatorGradient = Instance.new("UIGradient")
+			IndicatorGradient.Rotation = 90
+			IndicatorGradient.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Indicator.BackgroundColor3),
+				ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
+			})
+			IndicatorGradient.Parent = Indicator
+
+			TweenService:Create(Section.Title, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {TextTransparency = 0.35}):Play()
+			TweenService:Create(Indicator, TweenInfo.new(0.6, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {Size = UDim2.new(0, 2, 0, 18), BackgroundTransparency = 0.2}):Play()
 
 			function SectionValue:Set(NewSection)
 				Section.Title.Text = NewSection
 			end
 
 			SDone = true
-
 			return SectionValue
 		end
 
